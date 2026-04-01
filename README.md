@@ -6,7 +6,7 @@
 
 ## What It Does
 
-Standup Assistant is a local [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects your AI assistant (Claude Desktop) directly to GitHub. Ask it to prepare your standup and it fetches your real commits and pull requests from the last working day — across all your repos — and hands them to Claude to generate clean, natural standup bullets.
+DailyDiff is a local [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects your AI assistant (Claude Desktop) directly to GitHub. Ask it to prepare your standup and it fetches your real commits and pull requests from the last working day — across all your repos — and hands them to Claude to generate clean, natural standup bullets.
 
 No copy-pasting. No tab-switching. No forgetting what you did on Friday.
 
@@ -15,14 +15,13 @@ No copy-pasting. No tab-switching. No forgetting what you did on Friday.
 ## How It Works
 
 ```
-flowchart LR
     Developer --> Claude Desktop --> Standup MCP Server --> GitHub (via gh CLI) --> back
 ```
 
 ```mermaid
 flowchart LR
     A["👤 Developer<br/>'Prepare my standup'"] -->|prompt| B["🤖 Claude Desktop<br/>(MCP client)"]
-    B -->|MCP tool call| C["⚙️ Standup Assistant<br/>(Local MCP server)"]
+    B -->|MCP tool call| C["⚙️ DailyDiff<br/>(Local MCP server)"]
     C -->|"gh search commits/prs<br/>(gh CLI auth)"| D["☁️ GitHub<br/>(github.com)"]
     D -->|JSON| C
     C -->|structured summary| B
@@ -97,7 +96,7 @@ Add the following to your `claude_desktop_config.json`:
   "mcpServers": {
     "standup-assistant": {
       "command": "python",
-      "args": ["C:\\path\\to\\Standup assistant\\server.py"],
+      "args": ["C:\\path\\to\\DailyDiff\\server.py"],
       "env": {
         "GITHUB_USERNAME": "your_github_username"
       }
@@ -181,7 +180,7 @@ Fetches commits and pull requests for standup preparation.
 ## Project Structure
 
 ```
-Standup assistant/
+DailyDiff/
 ├── server.py          # MCP server — tool definitions and gh CLI logic
 ├── requirements.txt   # Python dependencies
 ├── .env               # Your local config (not committed)
