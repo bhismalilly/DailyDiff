@@ -31,7 +31,7 @@ def get_github_username() -> str:
     if GITHUB_USERNAME:
         return GITHUB_USERNAME
     result = subprocess.run(
-        ["C:\\Program Files\\GitHub CLI\\gh.exe", "api", "user", "--jq", ".login"],
+        ["gh", "api", "user", "--jq", ".login"],
         capture_output=True, text=True, check=True,
     )
     return result.stdout.strip()
@@ -40,7 +40,7 @@ def get_github_username() -> str:
 def run_gh(args: list[str]) -> list | dict:
     """Run a gh CLI command and return parsed JSON output."""
     result = subprocess.run(
-        ["C:\\Program Files\\GitHub CLI\\gh.exe"] + args,
+        ["gh"] + args,
         capture_output=True, text=True,
     )
     if result.returncode != 0:
