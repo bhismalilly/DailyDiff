@@ -15,7 +15,6 @@ No copy-pasting. No tab-switching. No forgetting what you did on Friday.
 ## How It Works
 
 ```
-flowchart LR
     Developer --> Claude Desktop --> Standup MCP Server --> GitHub (via gh CLI) --> back
 ```
 
