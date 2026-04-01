@@ -150,30 +150,5 @@ def get_standup_summary(
     }
 
 
-@mcp.prompt()
-def standup_format() -> str:
-    """Formatting rules for standup summaries generated from GitHub activity."""
-    return """
-When presenting standup output from get_standup_summary, follow these rules exactly:
-
-1. Group by repository. Use the repo name as a bold heading: **owner/repo**
-2. One bullet per commit or PR, merged together under the repo (no separate sections).
-3. Each bullet must follow this pattern:
-   - <what changed> → <reason inferred from the commit message or PR title>
-4. For PRs, append the PR number and state in parentheses: (PR #42, merged)
-5. Keep each bullet to a single line. No sub-bullets, no extra commentary.
-6. Do not add introductory or closing sentences. Output only the grouped bullets.
-
-Example:
-
-**EliLillyCo/my-repo**
-- Fixed null pointer in data pipeline → prevent crash when upstream data is missing
-- Added retry logic to API client (PR #42, merged) → improve resilience on flaky network
-
-**EliLillyCo/other-repo**
-- Refactored auth middleware → consolidate token validation across services
-"""
-
-
 if __name__ == "__main__":
     mcp.run()
