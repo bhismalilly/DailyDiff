@@ -49,28 +49,42 @@ def run_gh(args: list[str]) -> list | dict:
 
 
 def get_active_branches(repo: str, username: str, since_date: str) -> list[str]:
-    """Find branches the user pushed to recently via the repo events API."""
-    try:
-        events = run_gh([
-            "api",
-            f"/repos/{repo}/events?per_page=100",
-        ])
-    except Exception:
-        return []
+    """Find branches the user pushed to since since_date.
 
+    Uses the user's own event feed (/users/{username}/events) which works for
+    private org repos and requires only 1-2 paginated calls instead of probing
+    each branch individually.
+    """
     branches: set[str] = set()
-    for event in events:
-        if event["actor"]["login"] != username:
-            continue
-        if event["created_at"][:10] < since_date:
-            continue
-        if event["type"] == "PushEvent":
-            ref = event["payload"]["ref"]
-            if ref.startswith("refs/heads/"):
-                ref = ref[len("refs/heads/"):]
-            branches.add(ref)
-        elif event["type"] == "CreateEvent" and event["payload"]["ref_type"] == "branch":
-            branches.add(event["payload"]["ref"])
+
+    for page in range(1, 11):  # GitHub caps at 10 pages
+        try:
+            events = run_gh([
+                "api",
+                f"/users/{username}/events?per_page=100&page={page}",
+            ])
+        except Exception:
+            break
+
+        if not events:
+            break
+
+        for event in events:
+            if event["created_at"][:10] < since_date:
+                continue
+            if event.get("repo", {}).get("name", "") != repo:
+                continue
+            if event["type"] == "PushEvent":
+                ref = event["payload"]["ref"]
+                if ref.startswith("refs/heads/"):
+                    ref = ref[len("refs/heads/"):]
+                branches.add(ref)
+            elif event["type"] == "CreateEvent" and event["payload"]["ref_type"] == "branch":
+                branches.add(event["payload"]["ref"])
+
+        # Stop paging once all events on this page predate since_date
+        if events[-1]["created_at"][:10] < since_date:
+            break
 
     return list(branches)
 
@@ -142,7 +156,7 @@ def get_repo_events(repo: str, username: str, since_date: str) -> list[dict]:
                 "type": "push",
                 "branch": ref,
                 "date": event["created_at"],
-                "commits": len(event["payload"]["commits"]),
+                "commits": len(event["payload"].get("commits", [])),
             })
 
     return activity
