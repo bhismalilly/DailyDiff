@@ -65,9 +65,20 @@ Show actual completed work using the same format as "Yesterday":
 
 ### 5. Suggested Script
 
-A ready-to-read standup statement in quotes, 2–4 sentences max:
+A ready-to-read standup statement that sounds **natural and conversational** — 2–3 sentences max.
 
-> "Yesterday I {past work}. Today I {completed or planned work}. {Blockers or 'No blockers.'}"
+**Guidelines:**
+- Use contractions (I've, don't, it's) — more natural than formal speech
+- Lead with the most important work, not a chronological listing
+- Use varied sentence structures — avoid template patterns
+- Mention blockers only if they're real; otherwise omit
+- Write it like you're talking to peers, not reading bullet points
+
+**Example (natural):**
+> "I've been working on FUSE-204 this week, refactoring the system prompt into modular components — added domain knowledge, identity, operations, and tone modules. Planning to open a PR today. No blockers."
+
+**Avoid (stiff/template):**
+> "Yesterday I worked on FUSE-204 and added modules. Today I will open a PR. No blockers."
 
 ---
 

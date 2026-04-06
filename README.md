@@ -214,11 +214,31 @@ Fetches commits, pull requests, and branch activity for standup preparation.
 
 ---
 
-## Project Structure
+## Architecture
+
+DailyDiff follows a modular design with clear separation of concerns:
+
+| Module | Responsibility |
+|---|---|
+| `server.py` | MCP server initialization and tool registration |
+| `tools.py` | MCP tool implementations (business logic) |
+| `github_api.py` | GitHub API interactions (subprocess calls to `gh` CLI) |
+| `formatters.py` | Response formatting and template loading |
+
+This structure makes it easy to:
+- **Add new tools** — define them in `tools.py` and register in `server.py`
+- **Modify API logic** — edit `github_api.py` without touching tool definitions
+- **Update formats** — change templates in `formatters.py` or `RESPONSE_FORMAT.md`
+- **Test independently** — each module can be tested in isolation
+
+---
 
 ```
 DailyDiff/
-├── server.py              # MCP server — tool definitions and gh CLI logic
+├── server.py              # MCP server initialization and routing
+├── tools.py               # Tool implementations (get_standup_summary, get_commit_details)
+├── github_api.py          # GitHub API interactions via gh CLI
+├── formatters.py          # Response formatting utilities
 ├── RESPONSE_FORMAT.md     # Output formatting rules for standup responses
 ├── requirements.txt       # Python dependencies
 ├── .env                   # Your local config (not committed)
@@ -227,7 +247,28 @@ DailyDiff/
 
 ---
 
-## Security Notes
+## Contributing
+
+Contributions are welcome! If you'd like to improve DailyDiff:
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feat/your-feature`)
+3. Commit your changes (`git commit -m "Add your feature"`)
+4. Push to the branch (`git push origin feat/your-feature`)
+5. Open a Pull Request
+
+**Ideas for contributions:**
+- Support for additional Git platforms (GitLab, Bitbucket)
+- Review activity tracking (PRs you reviewed, not just authored)
+- Jira/Linear ticket linking from branch names
+- Slack integration for posting standups directly
+- Customizable response templates
+- Caching layer for repeated API calls
+- Performance optimizations for large orgs
+
+If you find a bug or have a feature request, please [open an issue](../../issues).
+
+---
 
 - No GitHub tokens are stored in code or config — authentication is handled entirely by `gh auth`
 - The `.env` file should never be committed to version control
