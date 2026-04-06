@@ -91,14 +91,34 @@ GITHUB_USERNAME=your_github_username
 
 Add the following to your `claude_desktop_config.json`:
 
-**Location:** `%APPDATA%\Claude\claude_desktop_config.json`
+**Location:**
+| OS | Path |
+|---|---|
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 
+**Windows:**
 ```json
 {
   "mcpServers": {
     "standup-assistant": {
       "command": "python",
       "args": ["C:\\path\\to\\DailyDiff\\server.py"],
+      "env": {
+        "GITHUB_USERNAME": "your_github_username"
+      }
+    }
+  }
+}
+```
+
+**macOS:**
+```json
+{
+  "mcpServers": {
+    "standup-assistant": {
+      "command": "python3",
+      "args": ["/path/to/DailyDiff/server.py"],
       "env": {
         "GITHUB_USERNAME": "your_github_username"
       }
