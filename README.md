@@ -6,7 +6,7 @@
 
 ## What It Does
 
-DailyDiff is a local [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects your AI assistant (Claude Desktop) directly to GitHub. Ask it to prepare your standup and it fetches your real commits and pull requests from the last working day — across all your repos — and hands them to Claude to generate clean, natural standup bullets.
+DailyDiff is a local [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects your AI assistant (Claude Desktop) directly to GitHub. Ask it to prepare your standup and it fetches your real commits, pull requests, and branch activity from the last working day — across all your repos, including private org repos and feature branches — and hands them to Claude to generate clean, natural standup bullets.
 
 No copy-pasting. No tab-switching. No forgetting what you did on Friday.
 
@@ -22,7 +22,7 @@ No copy-pasting. No tab-switching. No forgetting what you did on Friday.
 flowchart LR
     A["👤 Developer<br/>'Prepare my standup'"] -->|prompt| B["🤖 Claude Desktop<br/>(MCP client)"]
     B -->|MCP tool call| C["⚙️ DailyDiff<br/>(Local MCP server)"]
-    C -->|"gh search commits/prs<br/>(gh CLI auth)"| D["☁️ GitHub<br/>(github.com)"]
+    C -->|"REST API + Events API<br/>(gh CLI auth)"| D["☁️ GitHub<br/>(github.com)"]
     D -->|JSON| C
     C -->|structured summary| B
     B -->|"standup bullets"| A
@@ -34,6 +34,8 @@ flowchart LR
 ```
 
 The MCP server runs locally on your machine and uses the **GitHub CLI** (`gh`) to query GitHub — no API tokens or secrets in your code, just your existing `gh auth` session.
+
+For specific repos (`owner/repo`), it uses the GitHub REST API and Events API directly, which means it works with **private org repos** and picks up **feature branch** activity. For broader searches it falls back to GitHub's search API.
 
 ---
 
@@ -135,11 +137,11 @@ Summarize my GitHub activity since 2026-03-28.
 
 ### `get_standup_summary`
 
-Fetches commits and pull requests for standup preparation.
+Fetches commits, pull requests, and branch activity for standup preparation.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `project` | `string` (optional) | Filter by repo. Use `owner/repo` for exact match, or a name prefix to match multiple repos. |
+| `project` | `string` (optional) | Filter by repo. Use `owner/repo` for exact match (uses REST API — works for private repos), or a name prefix to match multiple repos. |
 | `since_date` | `string` (optional) | ISO date (`YYYY-MM-DD`) to look back from. Defaults to last working day (skips weekends). |
 
 **Returns:**
@@ -158,7 +160,8 @@ Fetches commits and pull requests for standup preparation.
           "sha": "1a2b3c4d",
           "message": "Fix null pointer in data pipeline",
           "date": "2026-03-31T14:22:00Z",
-          "url": "https://github.com/..."
+          "url": "https://github.com/...",
+          "branch": "feat/FUSE-204"
         }
       ]
     }
@@ -170,6 +173,19 @@ Fetches commits and pull requests for standup preparation.
       "title": "Add retry logic to API client",
       "state": "merged",
       "url": "https://github.com/..."
+    }
+  ],
+  "branch_activity": [
+    {
+      "type": "branch_created",
+      "branch": "feat/FUSE-204",
+      "date": "2026-04-06T06:25:34Z"
+    },
+    {
+      "type": "push",
+      "branch": "feat/FUSE-204",
+      "date": "2026-04-06T06:25:35Z",
+      "commits": 1
     }
   ]
 }
