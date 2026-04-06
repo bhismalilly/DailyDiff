@@ -1,3 +1,5 @@
 /.env
 /.env.example
 /diagram.txt
+__pycache__/
+*.pyc
