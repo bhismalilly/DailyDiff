@@ -13,6 +13,16 @@ mcp = FastMCP("standup-assistant")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "")
 
 
+def get_response_format() -> str:
+    """Read the response format instructions from RESPONSE_FORMAT.md."""
+    format_path = os.path.join(os.path.dirname(__file__), "RESPONSE_FORMAT.md")
+    try:
+        with open(format_path) as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+
+
 def last_working_day() -> str:
     """Return ISO date string for the last working day (skip weekends)."""
     today = datetime.now()
@@ -175,6 +185,8 @@ def get_standup_summary(
                  all your activity is returned.
         since_date: Optional ISO date string (YYYY-MM-DD) to look back from.
                     Defaults to the last working day (skips weekends).
+
+    RESPONSE FORMAT: Follow the formatting rules in the included `response_format` field.
     """
     try:
         username = get_github_username()
@@ -279,6 +291,7 @@ def get_standup_summary(
         "changes": changes,
         "pull_requests": pull_requests,
         "branch_activity": branch_activity,
+        "response_format": get_response_format(),
     }
 
 
