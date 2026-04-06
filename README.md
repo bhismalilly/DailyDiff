@@ -187,7 +187,8 @@ Fetches commits, pull requests, and branch activity for standup preparation.
       "date": "2026-04-06T06:25:35Z",
       "commits": 1
     }
-  ]
+  ],
+  "response_format": "# Standup Response Format\n..."
 }
 ```
 
@@ -197,10 +198,11 @@ Fetches commits, pull requests, and branch activity for standup preparation.
 
 ```
 DailyDiff/
-├── server.py          # MCP server — tool definitions and gh CLI logic
-├── requirements.txt   # Python dependencies
-├── .env               # Your local config (not committed)
-└── .env.example       # Config template
+├── server.py              # MCP server — tool definitions and gh CLI logic
+├── RESPONSE_FORMAT.md     # Output formatting rules for standup responses
+├── requirements.txt       # Python dependencies
+├── .env                   # Your local config (not committed)
+└── .env.example           # Config template
 ```
 
 ---
