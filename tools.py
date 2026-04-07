@@ -6,6 +6,7 @@ from github_api import (
     get_repo_commits,
     get_repo_events,
     run_gh,
+    run_gh_raw,
 )
 from formatters import get_response_format
 
@@ -140,27 +141,92 @@ def get_commit_details(
     repo: str,
     sha: str,
 ) -> dict:
-    """Get file-level diff details for a specific commit. Use this when the user
-    asks for more detail about what changed in a particular commit.
+    """Get detailed commit information including file-level diffs and line-by-line changes.
+    Use this when the user asks for more detail about what changed in a particular commit.
 
     Args:
         repo: The repo in "owner/repo" format.
         sha: The commit SHA (full or short).
     """
-    jq_filter = '{sha, message: .commit.message, author: .commit.author.name, date: .commit.author.date, html_url, stats, files: [.files[] | {filename, status, additions, deletions}]}'
     try:
-        commit = run_gh([
-            "api", f"/repos/{repo}/commits/{sha}",
-            "--jq", jq_filter,
-        ])
+        # Fetch raw JSON without --jq to avoid empty output when jq filter
+        # fails on unexpected API response shapes (e.g. private org repos)
+        raw = run_gh(["api", f"/repos/{repo}/commits/{sha}"])
+        files = [
+            {
+                "filename": f.get("filename"),
+                "status": f.get("status"),
+                "additions": f.get("additions", 0),
+                "deletions": f.get("deletions", 0),
+                # patch is absent for binary files or diffs exceeding GitHub's size limit
+                "patch": f.get("patch"),
+            }
+            for f in raw.get("files", [])
+        ]
+        has_patches = any(f["patch"] for f in files)
         return {
-            "sha": commit["sha"][:8],
-            "message": commit["message"],
-            "author": commit["author"],
-            "date": commit["date"],
-            "url": commit["html_url"],
-            "stats": commit.get("stats", {}),
-            "files": commit.get("files", []),
+            "sha": raw["sha"][:8],
+            "message": raw["commit"]["message"],
+            "author": raw["commit"]["author"]["name"],
+            "date": raw["commit"]["author"]["date"],
+            "url": raw["html_url"],
+            "stats": raw.get("stats", {}),
+            "files": files,
+            "diff_available": has_patches,
+            "diff_note": None if has_patches else "Patch content unavailable — files may be binary, too large, or access may be restricted. File-level stats are still shown above.",
         }
     except Exception as e:
         return {"error": f"Failed to fetch commit details: {e}"}
+
+
+def get_raw_commit_diff(
+    repo: str,
+    sha: str,
+) -> dict:
+    """Fetch the raw unified diff for a commit using GitHub's diff media type.
+    This is a different code path from the JSON API and works even when the
+    JSON endpoint returns empty — useful for org/private repos and when commit
+    messages are not descriptive enough to understand what changed.
+
+    Args:
+        repo: The repo in "owner/repo" format.
+        sha: The commit SHA (full or short).
+    """
+    try:
+        diff_text = run_gh_raw([
+            "api", f"/repos/{repo}/commits/{sha}",
+            "-H", "Accept: application/vnd.github.diff",
+        ])
+        return {
+            "sha": sha,
+            "repo": repo,
+            "diff": diff_text,
+        }
+    except Exception as e:
+        return {"error": f"Failed to fetch raw diff: {e}"}
+
+
+def get_pr_diff(
+    repo: str,
+    pr_number: int,
+) -> dict:
+    """Fetch the full unified diff for a pull request.
+    Use this to understand what a PR actually changes when the PR description
+    is missing, vague, or commit messages are not descriptive.
+
+    Args:
+        repo: The repo in "owner/repo" format.
+        pr_number: The pull request number.
+    """
+    try:
+        diff_text = run_gh_raw([
+            "api", f"/repos/{repo}/pulls/{pr_number}",
+            "-H", "Accept: application/vnd.github.diff",
+        ])
+        return {
+            "repo": repo,
+            "pr_number": pr_number,
+            "diff": diff_text,
+        }
+    except Exception as e:
+        return {"error": f"Failed to fetch PR diff: {e}"}

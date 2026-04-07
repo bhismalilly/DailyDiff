@@ -27,7 +27,7 @@ def get_github_username() -> str:
         return GITHUB_USERNAME
     result = subprocess.run(
         ["gh", "api", "user", "--jq", ".login"],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=True,
     )
     return result.stdout.strip()
 
@@ -36,14 +36,27 @@ def run_gh(args: list[str]) -> list | dict:
     """Run a gh CLI command and return parsed JSON output."""
     result = subprocess.run(
         ["gh"] + args,
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=30,
     )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip())
+    # Some org repos cause gh to exit with code 1 due to SSO warnings in stderr
+    # even when the response body is valid — check output first before failing
     if not result.stdout or not result.stdout.strip():
-        raise RuntimeError("Empty response from gh CLI")
+        raise RuntimeError(result.stderr.strip() or "Empty response from gh CLI")
     return json.loads(result.stdout)
+
+
+def run_gh_raw(args: list[str]) -> str:
+    """Run a gh CLI command and return raw text output (for diffs, patches, etc.)."""
+    result = subprocess.run(
+        ["gh"] + args,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=30,
+    )
+    # Same as run_gh — prioritise output over exit code for org repos
+    if not result.stdout or not result.stdout.strip():
+        raise RuntimeError(result.stderr.strip() or "Empty response from gh CLI")
+    return result.stdout
 
 
 def get_active_branches(repo: str, username: str, since_date: str) -> list[str]:
