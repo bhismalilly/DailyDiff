@@ -1,0 +1,19 @@
+[project]
+name = "dailydiff"
+version = "0.1.0"
+description = "An AI-powered MCP server that surfaces your GitHub activity for standup prep."
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "python-dotenv",
+]
+
+[project.scripts]
+dailydiff = "dailydiff.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dailydiff"]

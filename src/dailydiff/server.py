@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-from tools import get_standup_summary, get_commit_details, get_raw_commit_diff, get_pr_diff
+from .tools import get_standup_summary, get_commit_details, get_raw_commit_diff, get_pr_diff
 
 load_dotenv()
 
@@ -83,5 +83,9 @@ def get_pr_diff_tool(
     return get_pr_diff(repo, pr_number)
 
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

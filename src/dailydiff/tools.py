@@ -1,6 +1,8 @@
 """MCP tool definitions."""
 
-from github_api import (
+import os
+
+from .github_api import (
     get_github_username,
     last_working_day,
     get_repo_commits,
@@ -8,7 +10,16 @@ from github_api import (
     run_gh,
     run_gh_raw,
 )
-from formatters import get_response_format
+from .formatters import get_response_format
+
+GITHUB_ORG = os.getenv("GITHUB_ORG", "")
+
+
+def _resolve_repo(name: str) -> str:
+    """Prepend the default org if the name has no owner prefix."""
+    if "/" not in name and GITHUB_ORG:
+        return f"{GITHUB_ORG}/{name}"
+    return name
 
 
 def get_standup_summary(
@@ -37,6 +48,9 @@ def get_standup_summary(
 
     if not since_date:
         since_date = last_working_day()
+
+    if project:
+        project = _resolve_repo(project)
 
     # --- Commits ---
     commits_by_repo: dict[str, list[dict]] = {}
@@ -148,6 +162,7 @@ def get_commit_details(
         repo: The repo in "owner/repo" format.
         sha: The commit SHA (full or short).
     """
+    repo = _resolve_repo(repo)
     try:
         # Fetch raw JSON without --jq to avoid empty output when jq filter
         # fails on unexpected API response shapes (e.g. private org repos)
@@ -192,6 +207,7 @@ def get_raw_commit_diff(
         repo: The repo in "owner/repo" format.
         sha: The commit SHA (full or short).
     """
+    repo = _resolve_repo(repo)
     try:
         diff_text = run_gh_raw([
             "api", f"/repos/{repo}/commits/{sha}",
@@ -218,6 +234,7 @@ def get_pr_diff(
         repo: The repo in "owner/repo" format.
         pr_number: The pull request number.
     """
+    repo = _resolve_repo(repo)
     try:
         diff_text = run_gh_raw([
             "api", f"/repos/{repo}/pulls/{pr_number}",
