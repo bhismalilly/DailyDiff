@@ -75,10 +75,10 @@ A ready-to-read standup statement that sounds **natural and conversational** —
 - Write it like you're talking to peers, not reading bullet points
 
 **Example (natural):**
-> "I've been working on FUSE-204 this week, refactoring the system prompt into modular components — added domain knowledge, identity, operations, and tone modules. Planning to open a PR today. No blockers."
+> "I've been working on PROJ-104 this week, refactoring the system prompt into modular components — added domain knowledge, identity, operations, and tone modules. Planning to open a PR today. No blockers."
 
 **Avoid (stiff/template):**
-> "Yesterday I worked on FUSE-204 and added modules. Today I will open a PR. No blockers."
+> "Yesterday I worked on PROJ-104 and added modules. Today I will open a PR. No blockers."
 
 ---
 
@@ -86,7 +86,7 @@ A ready-to-read standup statement that sounds **natural and conversational** —
 
 | Rule | Detail |
 |---|---|
-| Branch names | Wrap in backticks: `feat/FUSE-204` |
+| Branch names | Wrap in backticks: `feat/PROJ-104` |
 | SHAs | Wrap in backticks, first 8 chars: `a1b2c3d4` |
 | PR numbers | Bold with hash: **#42** |
 | Links | Inline markdown: `[View →](url)` |

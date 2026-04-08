@@ -43,7 +43,7 @@ For specific repos (`owner/repo`), it uses the GitHub REST API and Events API di
 
 | Requirement | Notes |
 |---|---|
-| Python 3.11+ | |
+| [uv](https://docs.astral.sh/uv/) | Fast Python package manager |
 | [GitHub CLI](https://cli.github.com/) | Must be installed and authenticated |
 | [Claude Desktop](https://claude.ai/download) | Or any MCP-compatible client |
 
@@ -63,31 +63,19 @@ Follow the prompts — select **GitHub.com**, **HTTPS**, and **Login with a web 
 
 ---
 
-### 2. Install Python dependencies
+### 2. Install uv
 
 ```bash
-pip install -r requirements.txt
+# Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ---
 
-### 3. Configure environment
-
-Copy `.env.example` to `.env` and fill in your GitHub username:
-
-```bash
-cp .env.example .env
-```
-
-```env
-GITHUB_USERNAME=your_github_username
-```
-
-> If `GITHUB_USERNAME` is omitted, it will be auto-detected from your `gh auth` session.
-
----
-
-### 4. Configure Claude Desktop
+### 3. Configure Claude Desktop
 
 Add the following to your `claude_desktop_config.json`:
 
@@ -97,30 +85,41 @@ Add the following to your `claude_desktop_config.json`:
 | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 
-**Windows:**
+**Option A — Install from GitHub (recommended):**
+
+Run once:
+
+```bash
+uv tool install git+https://github.com/your-user/DailyDiff
+```
+
+Then configure:
+
 ```json
 {
   "mcpServers": {
     "standup-assistant": {
-      "command": "python",
-      "args": ["C:\\path\\to\\DailyDiff\\server.py"],
+      "command": "dailydiff",
       "env": {
-        "GITHUB_USERNAME": "your_github_username"
+        "GITHUB_USERNAME": "your_github_username",
+        "GITHUB_ORG": "your-org"
       }
     }
   }
 }
 ```
 
-**macOS:**
+**Option B — No pre-install (uvx):**
+
 ```json
 {
   "mcpServers": {
     "standup-assistant": {
-      "command": "python3",
-      "args": ["/path/to/DailyDiff/server.py"],
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/your-user/DailyDiff", "dailydiff"],
       "env": {
-        "GITHUB_USERNAME": "your_github_username"
+        "GITHUB_USERNAME": "your_github_username",
+        "GITHUB_ORG": "your-org"
       }
     }
   }
@@ -128,6 +127,17 @@ Add the following to your `claude_desktop_config.json`:
 ```
 
 Restart Claude Desktop after saving.
+
+---
+
+### Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_USERNAME` | No | Your GitHub username. Auto-detected from `gh auth` if omitted. |
+| `GITHUB_ORG` | No | Default GitHub org. When set, you can type `my-repo` instead of `your-org/my-repo`. |
+
+These can be set in the MCP config `env` block, in a `.env` file, or as system environment variables.
 
 ---
 
@@ -144,12 +154,14 @@ What did I work on yesterday?
 ```
 
 ```
-Get my standup summary for the EliLillyCo/my-repo repo.
+Get my standup summary for my-repo.
 ```
 
 ```
 Summarize my GitHub activity since 2026-03-28.
 ```
+
+> With `GITHUB_ORG` set, you can just use the repo name — no need to type `your-org/my-repo` every time.
 
 ---
 
@@ -161,7 +173,7 @@ Fetches commits, pull requests, and branch activity for standup preparation.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `project` | `string` (optional) | Filter by repo. Use `owner/repo` for exact match (uses REST API — works for private repos), or a name prefix to match multiple repos. |
+| `project` | `string` (optional) | Filter by repo. Use `owner/repo` for exact match, or just the repo name if `GITHUB_ORG` is set. A plain name prefix matches multiple repos. |
 | `since_date` | `string` (optional) | ISO date (`YYYY-MM-DD`) to look back from. Defaults to last working day (skips weekends). |
 
 **Returns:**
@@ -169,26 +181,26 @@ Fetches commits, pull requests, and branch activity for standup preparation.
 ```json
 {
   "since": "2026-03-31",
-  "author": "bhismalilly",
+  "author": "your_github_username",
   "total_commits": 4,
   "repos_with_changes": 2,
   "changes": [
     {
-      "repo": "EliLillyCo/my-repo",
+      "repo": "your-org/my-repo",
       "commits": [
         {
           "sha": "1a2b3c4d",
           "message": "Fix null pointer in data pipeline",
           "date": "2026-03-31T14:22:00Z",
           "url": "https://github.com/...",
-          "branch": "feat/FUSE-204"
+          "branch": "feat/my-feature"
         }
       ]
     }
   ],
   "pull_requests": [
     {
-      "repo": "EliLillyCo/my-repo",
+      "repo": "your-org/my-repo",
       "number": 42,
       "title": "Add retry logic to API client",
       "state": "merged",
@@ -198,12 +210,12 @@ Fetches commits, pull requests, and branch activity for standup preparation.
   "branch_activity": [
     {
       "type": "branch_created",
-      "branch": "feat/FUSE-204",
+      "branch": "feat/my-feature",
       "date": "2026-04-06T06:25:34Z"
     },
     {
       "type": "push",
-      "branch": "feat/FUSE-204",
+      "branch": "feat/my-feature",
       "date": "2026-04-06T06:25:35Z",
       "commits": 1
     }
@@ -220,10 +232,10 @@ DailyDiff follows a modular design with clear separation of concerns:
 
 | Module | Responsibility |
 |---|---|
-| `server.py` | MCP server initialization and tool registration |
-| `tools.py` | MCP tool implementations (business logic) |
-| `github_api.py` | GitHub API interactions (subprocess calls to `gh` CLI) |
-| `formatters.py` | Response formatting and template loading |
+| `src/dailydiff/server.py` | MCP server initialization and tool registration |
+| `src/dailydiff/tools.py` | MCP tool implementations (business logic) |
+| `src/dailydiff/github_api.py` | GitHub API interactions (subprocess calls to `gh` CLI) |
+| `src/dailydiff/formatters.py` | Response formatting and template loading |
 
 This structure makes it easy to:
 - **Add new tools** — define them in `tools.py` and register in `server.py`
@@ -235,14 +247,17 @@ This structure makes it easy to:
 
 ```
 DailyDiff/
-├── server.py              # MCP server initialization and routing
-├── tools.py               # Tool implementations (get_standup_summary, get_commit_details)
-├── github_api.py          # GitHub API interactions via gh CLI
-├── formatters.py          # Response formatting utilities
-├── RESPONSE_FORMAT.md     # Output formatting rules for standup responses
-├── requirements.txt       # Python dependencies
-├── .env                   # Your local config (not committed)
-└── .env.example           # Config template
+├── pyproject.toml                  # Package metadata and dependencies
+├── README.md
+├── .env.example                    # Config template
+└── src/
+    └── dailydiff/
+        ├── __init__.py
+        ├── server.py               # MCP server initialization and routing
+        ├── tools.py                # Tool implementations (standup, diffs, etc.)
+        ├── github_api.py           # GitHub API interactions via gh CLI
+        ├── formatters.py           # Response formatting utilities
+        └── RESPONSE_FORMAT.md      # Output formatting rules for standup responses
 ```
 
 ---
@@ -269,6 +284,8 @@ Contributions are welcome! If you'd like to improve DailyDiff:
 If you find a bug or have a feature request, please [open an issue](../../issues).
 
 ---
+
+## Security
 
 - No GitHub tokens are stored in code or config — authentication is handled entirely by `gh auth`
 - The `.env` file should never be committed to version control
