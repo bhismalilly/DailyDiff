@@ -85,12 +85,10 @@ Add the following to your `claude_desktop_config.json`:
 | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 
-**Option A — Install from GitHub (recommended):**
-
 Run once:
 
 ```bash
-uv tool install git+https://github.com/your-user/DailyDiff
+uv tool install git+https://github.com/bhismalilly/DailyDiff
 ```
 
 Then configure:
@@ -100,23 +98,6 @@ Then configure:
   "mcpServers": {
     "standup-assistant": {
       "command": "dailydiff",
-      "env": {
-        "GITHUB_USERNAME": "your_github_username",
-        "GITHUB_ORG": "your-org"
-      }
-    }
-  }
-}
-```
-
-**Option B — No pre-install (uvx):**
-
-```json
-{
-  "mcpServers": {
-    "standup-assistant": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/your-user/DailyDiff", "dailydiff"],
       "env": {
         "GITHUB_USERNAME": "your_github_username",
         "GITHUB_ORG": "your-org"
